@@ -50,19 +50,21 @@ def initial_guard(current_warehouse,direction="up"):
     
 guard_start = initial_guard(warehouse)
 
-def guard_travel(current_warehouse,direction,current_guard_location=None):
+# def guard_travel(current_warehouse,direction,current_guard_location=None):
     
-    if direction == "up":
-        guard_up(current_warehouse,current_guard_location)
-    if direction == "right":
-        guard_right(current_warehouse,current_guard_location)
-    if direction == "down":
-        guard_down(current_warehouse,current_guard_location)
-    if direction == "left":
-        guard_left(current_warehouse,current_guard_location)
+#     if direction == "up":
+#         guard_up(current_warehouse,current_guard_location)
+#     if direction == "right":
+#         guard_right(current_warehouse,current_guard_location)
+#     if direction == "down":
+#         guard_down(current_warehouse,current_guard_location)
+#     if direction == "left":
+#         guard_left(current_warehouse,current_guard_location)
     
         
 def guard_up(current_warehouse,guard_location):
+    global add_result
+    global visit_dict
     current_x = int(guard_location[0])
     current_y = int(guard_location[1])
     
@@ -77,30 +79,29 @@ def guard_up(current_warehouse,guard_location):
             else:
                 visit_dict[(current_x,current_y)]["up"] += 1
             print(visit_dict[(current_x,current_y)])
-            if visit_dict[(current_x,current_y)]["up"] >= 4:
+            if visit_dict[(current_x,current_y)]["up"] >= 2:
                 add_result = True
                 current_x = -1
                 break
 
             new_direction = "right"
             guard_location = (current_x,current_y)
-            current_warehouse[current_x][current_y] = directions["right"]
+           
             
             print(guard_location, "turning right")
             
-            guard_travel(current_warehouse,new_direction,guard_location)
+            guard_right(current_warehouse,guard_location)
             break
-
+    print("supposedly done")
 
 def guard_right(current_warehouse,guard_location):
-    
+    global add_result
+    global visit_dict
     current_x = guard_location[0]
     current_y = guard_location[1]
 
     while current_y < warehouse_width - 1:
         if current_warehouse[current_x][current_y+1] == ".":
-            current_warehouse[current_x][current_y+1] = directions["right"]
-            current_warehouse[current_x][current_y] = "."
             current_y += 1
         elif current_warehouse[current_x][current_y+1] == "#":
             if (current_x,current_y) not in visit_dict:
@@ -108,32 +109,30 @@ def guard_right(current_warehouse,guard_location):
             else:
                 visit_dict[(current_x,current_y)]["right"] += 1
             print(visit_dict[(current_x,current_y)])
-            if visit_dict[(current_x,current_y)]["right"] >= 4:
+            if visit_dict[(current_x,current_y)]["right"] >= 2:
                 add_result = True
                 current_y = warehouse_width + 1
                 break
 
             new_direction = "down"
             guard_location = (current_x,current_y)
-            current_warehouse[current_x][current_y] = directions["down"]
+            
             
             print(guard_location, "turning down")
-            guard_travel(current_warehouse,new_direction,guard_location)
+            guard_down(current_warehouse,guard_location)
             break
-    
+    print("supposedly done")
 
 
 def guard_down(current_warehouse,guard_location):
+    global add_result
+    global visit_dict
     current_x = guard_location[0]
     current_y = guard_location[1]
     
     while current_x < warehouse_height-1:        
         if current_warehouse[current_x+1][current_y] == ".":
-            current_warehouse[current_x+1][current_y] = directions["down"]
-            current_warehouse[current_x][current_y] = "."
-            
             current_x += 1
-            print(f"{current_x}, {current_y}")
         elif current_warehouse[current_x+1][current_y] == "#":
             if (current_x,current_y) not in visit_dict:
                 visit_dict[(current_x,current_y)] = {"down":  1, "up": 0, "left": 0, "right" : 0}
@@ -141,7 +140,7 @@ def guard_down(current_warehouse,guard_location):
                 visit_dict[(current_x,current_y)]["down"] += 1
             print(visit_dict[(current_x,current_y)])
 
-            if visit_dict[(current_x,current_y)]["down"] >= 4:
+            if visit_dict[(current_x,current_y)]["down"] >= 2:
                 add_result = True
                 current_x = warehouse_height + 1
                 break
@@ -149,25 +148,25 @@ def guard_down(current_warehouse,guard_location):
                   
             new_direction = "left"
             guard_location = (current_x,current_y)
-            current_warehouse[current_x][current_y] = directions["left"]
+            
             print(guard_location, "turning left")
-            guard_travel(current_warehouse,new_direction,guard_location)
+            guard_left(current_warehouse,guard_location)
             break
-
+    print("supposedly done")
 
         
 
 
 def guard_left(current_warehouse,guard_location):
+    global add_result
+    global visit_dict
     current_x = guard_location[0]
     current_y = guard_location[1]
     while current_y > 0:
         
         if current_warehouse[current_x][current_y-1] == ".":
-            current_warehouse[current_x][current_y-1] = directions["left"]
-            current_warehouse[current_x][current_y] = "."
             current_y -= 1
-        if current_warehouse[current_x][current_y-1] == "#":
+        elif current_warehouse[current_x][current_y-1] == "#":
             
             if (current_x,current_y) not in visit_dict:
                 visit_dict[(current_x,current_y)] = {"down":  0, "up": 0, "left": 1, "right" : 0}
@@ -175,38 +174,50 @@ def guard_left(current_warehouse,guard_location):
                 visit_dict[(current_x,current_y)]["left"] += 1
             print(visit_dict[(current_x,current_y)])
 
-            if visit_dict[(current_x,current_y)]["left"] >= 4:
+            if visit_dict[(current_x,current_y)]["left"] >= 2:
                 add_result = True
                 current_y = -1
                 break
             
             new_direction = "up"
             guard_location = (current_x,current_y)
-            current_warehouse[current_x][current_y] = directions["up"]
+            
             print(guard_location, "turning up")
-            guard_travel(current_warehouse,new_direction,guard_location)
+            guard_up(current_warehouse,guard_location)
             break
+    print("supposedly done")
 
 
             
 def test_for_loop(warehouse_mod):
+    global visit_dict
+    visit_dict = {}
     warehouse_mod[guard_start[0]][guard_start[1]] = "."
-    guard_travel(warehouse_mod,"up",guard_start)
+    guard_up(warehouse_mod,guard_start)
+    
 
-    if add_result == True:
-        loop_obstacles += 1
+    
 
 
 
 
 
 def add_obstacle(warehouse_mod):
+    global add_result
+    global loop_obstacles
+    global visit_dict
     for row in warehouse_mod:
         for index, item in enumerate(row):
-            if item != "#":
+            if item == "#":
+                continue
+            elif item != "#":
                 row[index] = "#"
                 test_for_loop(warehouse_mod)
                 row[index] = '.'
+                if add_result == True:
+                    loop_obstacles += 1
+                    add_result = False
+                visit_dict = {}
     return loop_obstacles
 
 
