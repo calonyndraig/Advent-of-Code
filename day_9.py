@@ -1,7 +1,9 @@
+import copy
+import json
 # import numpy as np
 from pip._vendor import requests
 # import re
-import copy
+
 
 
 def fetch_data(url,session):
@@ -16,53 +18,69 @@ def fetch_data(url,session):
     else:
         data = None
 
-    return data
+    data.splitlines()
+    
 
-def re_string(data):
+    correct_data = [int(x) for x in data[0:-1] if x!= "\n"]
+    
+    # correct_data.append(7)
+
+    return correct_data
+
+def re_string(correct_data):
     uncompressed_data = []
-    j = 0
-    for index,char in enumerate(data):
-        increase_j = False
+    for index,item in enumerate(correct_data):
         if index % 2 == 0:
-            for i in range(int(char)):
-                uncompressed_data.append(str(j))
+            for i in range(item):
+                uncompressed_data.append(index/2)
         else:
-            if (int(char)) == 0:
-                increase_j = True
-            for i in range(int(char)):
+            for i in range(item):
                 uncompressed_data.append(".")
-                increase_j = True
-        
-        if increase_j:
-            j += 1
     return uncompressed_data
  
-def compress(uncompressed_data):
-    j = len(uncompressed_data)-1
-    data_sum = 0
-    for index,item in enumerate(uncompressed_data):
-        if j > index:
-            if item == ".":
-                while uncompressed_data[j] == ".":
-                    j -= 1
-                uncompressed_data[index], uncompressed_data[j] = uncompressed_data[j],uncompressed_data[index]
-                j -= 1
-    # compressed_data = ''.join(uncompressed_data)      
-    return uncompressed_data
+def compress(data):
+    j = len(data)-1
 
-def calculate(uncompressed_data):
+
+        
+        if j > index and item == ".":
+            index = i
+            needed_length = 1
+            
+
+            while data[j] == "." and j > index:
+                j -= 1
+            if j < index:
+                break
+            
+            
+            
+            else:
+                data[index], data[j] = data[j], data[index]
+    return data
+
+def calculate(compressed_data):
     checksum = 0
-    for index,item in enumerate(uncompressed_data):
-        if item.isdigit(): 
-            checksum += index * int(item)
+    for index,item in enumerate(compressed_data):
+        # print(item)
+        if item != ".": 
+            to_add = index * int(item)
+            checksum += to_add
     return checksum
+
+def send_to_json(data,filename):
+    with open (filename, "w") as file:
+        json.dump(data[0:-1],file)
 
 
 
 if __name__ == "__main__":
     data = fetch_data('https://adventofcode.com/2024/day/9/input',"53616c7465645f5fc1fe684fb1f69a6b41ac2b62bd1750416b41a269ae6a524fc41139a82c1124eb6003e39f8fcc8be904a4994139cab73e3e065fa38ec386cd")
-    test_data = "2333133121414131402"
-    new_string = re_string(test_data)
-    compressed = compress(new_string)
-    num = calculate(compressed)
-    print(num)
+    # print(data[-1])
+    expanded = re_string(data)
+    print(expanded[-10:])
+    send_to_json(expanded,"expanded_list.json")
+    compressed = compress(expanded)
+    send_to_json(compressed,"compressed_list.json")
+    calculated = calculate(compressed)
+    print(calculated)
