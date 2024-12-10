@@ -1,7 +1,19 @@
+import logging
+# import json
 # import numpy as np
 from pip._vendor import requests
 # import re
-import json
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(message)s',
+    handlers=[
+        logging.FileHandler("output.txt", mode='a'),
+        logging.StreamHandler()
+    ]
+)
+
+
 
 def fetch_data(url,session):
     headers = {
@@ -29,56 +41,76 @@ def parse_data(data):  ### creates matrix
 
 trail_count = 0
 
-def build_trailheads(current_num,coord,data):
-    print(f"Checking {current_num}, {coord}...")
+trail_dict = {}
+
+def build_trailheads(current_num,coord,data,visited,startcoord):
+    logging.info(f"Checking {current_num}, {coord}...")
     global trail_count
-    if current_num == 9:
-        trail_count +=1
-        print(f"Increased trail_count...{trail_count}")
-    elif current_num < 9:
-        x,y = coord
-        if x < len(data)-1:
-            next_coords = x+1,y
-            continue_check = check_next(current_num+1,next_coords,data)
-            if continue_check:
-                build_trailheads(current_num+1,next_coords,data)
-        if x > 0:
-            next_coords = x-1,y
-            continue_check = check_next(current_num+1,next_coords,data)
-            if continue_check:
-                build_trailheads(current_num+1,next_coords,data)
-        if y < len(data[0])-1:
-            next_coords = x, y+1
-            continue_check = check_next(current_num+1,next_coords,data)
-            if continue_check:
-                build_trailheads(current_num+1,next_coords,data)
-        if y > 0:
-            next_coords = x, y-1
-            continue_check = check_next(current_num+1,next_coords,data)
-            if continue_check:
-                build_trailheads(current_num+1,next_coords,data)
+    global trail_dict
     
+    if coord in visited:
+        logging.info("Coordinate previously visited, ending loop...")
+        return
+    visited.add(coord)
+
+    x, y = coord
+
+    if current_num == 9:
+        trail_count += 1
+        if coord not in trail_dict[startcoord]:
+            trail_dict[startcoord].append(coord)
+
+        logging.info(f"Increased trail_count...{trail_count}")
+    elif current_num < 9:
+        if x < len(data)-1 and (x+1,y) not in visited:
+            next_coords = (x+1,y)
+            if check_next(current_num+1,next_coords,data):                
+                build_trailheads(current_num+1,next_coords,data,visited.copy(),startcoord)
+        if x > 0 and (x-1,y) not in visited:
+            next_coords = (x-1,y)
+            if check_next(current_num+1,next_coords,data):
+                build_trailheads(current_num+1,next_coords,data,visited.copy(),startcoord)
+        if y < len(data[0])-1 and (x,y+1) not in visited:
+            next_coords = (x, y+1)
+            if check_next(current_num+1,next_coords,data):
+                build_trailheads(current_num+1,next_coords,data,visited.copy(),startcoord)
+        if y > 0 and (x,y-1) not in visited:
+            next_coords = (x, y-1)
+            if check_next(current_num+1,next_coords,data):
+                build_trailheads(current_num+1,next_coords,data,visited.copy(),startcoord)
+
+
 def check_next(current_num, coord, data):
     x,y = coord
-    if data[x][y] == current_num:
-        return True
-    else:
-        return False  
+    return data[x][y] == current_num
+
 
 def iterate_map(data):
     global trail_count
+    # global score_sum
+    global trail_dict
+    visited = set()
     for row_num, row in enumerate(data):
         for col_num, item in enumerate(row):
-            if item == 0:
-                coord = row_num,col_num
-                build_trailheads(0,coord,data)
-            
-    return trail_count
+            if item == 0 and (row_num, col_num) not in visited:
+                coord = (row_num,col_num)
+                startcoord = coord
+                if coord not in trail_dict:
+                    trail_dict[coord] = []
+                build_trailheads(0,coord,data,visited.copy(),startcoord)
+
+
+    scores = [len(x) for x in trail_dict.values()]
+    score_sum = 0
+    for i in scores:
+        score_sum += i
+
+    return score_sum
 
 
 if __name__ == "__main__":
     data = fetch_data('https://adventofcode.com/2024/day/10/input',"53616c7465645f5fc1fe684fb1f69a6b41ac2b62bd1750416b41a269ae6a524fc41139a82c1124eb6003e39f8fcc8be904a4994139cab73e3e065fa38ec386cd")
     parsed_data = parse_data(data)
-    trail_count = iterate_map(parsed_data)
-    print(trail_count)
+    trail_scores = iterate_map(parsed_data)
+    print(trail_scores)
     
