@@ -193,10 +193,10 @@ def build_area(matrix):
                     temp_group = check_neighbors(matrix,coords,item,[(coords)])
                     print(temp_group)
                     # time.sleep(0.5)
-                    area_perimeter = build_final_dict(temp_group)
-                    print(area_perimeter)
+                    group_attrs = build_final_dict(temp_group,matrix)
+                    print(group_attrs)
                     # time.sleep(0.5)
-                    total_cost += area_perimeter[0] * area_perimeter[1]
+                    total_cost += group_attrs[0] * group_attrs[2]
                     print(total_cost)
                     # time.sleep(0.5)
 
@@ -205,29 +205,59 @@ def build_area(matrix):
     return total_cost
                     
     
-def find_corners(temp_group,matrix):
+def find_corners(temp_group, matrix):
+    only_edges = [x for x in temp_group if edges_dict[x] != 0]
+    row_num, col_num = temp_group[0]
+    character = matrix[row_num][col_num]
     corner_count = 0
-    min_x = min([x[0] for x in temp_group])
-    min_y = min([x[1] for x in temp_group])
-    max_x = max([x[0] for x in temp_group])
-    max_y = max([x[1] for x in temp_group])
 
+    # Prepare extended matrix
     nump_garden = np.array(matrix)
-    add_row = np.array([0 for x in range(len(nump_garden[0])-1)])
-    nump_garden = np.vstack(add_top,nump_garden,add_top)
-    add_column = np.array([[0] for x in range(len(nump_garden-1))])
-    nump_garden = np.hstack(add_column,nump_garden,add_column) 
-        
-    return nump_garden    
-    # sub_matrix = 
-    # for row_num in range(min_x,max_x):
-    #     for col_num in range(min_y,max_y):
+    add_row = np.array([0 for _ in range(len(nump_garden[0]))])
+    nump_garden = np.vstack([add_row, nump_garden])
+    nump_garden = np.vstack([nump_garden, add_row])
+    add_column = np.array([[0] for _ in range(len(nump_garden))])
+    nump_garden = np.hstack([add_column, nump_garden])
+    nump_garden = np.hstack([nump_garden, add_column])
+
+    # Use a set for unique corners
+    corners_checked = set()
+
+    for item in temp_group:
+        item_x, item_y = item[0] + 1, item[1] + 1  # Adjust for padding
+
+        # Define the four corner regions
+        corner_regions = [
+            [(item_x, item_y), (item_x, item_y+1), (item_x+1, item_y), (item_x+1, item_y+1)],
+            [(item_x-1, item_y-1), (item_x-1, item_y), (item_x, item_y-1), (item_x, item_y)],
+            [(item_x-1, item_y), (item_x-1, item_y+1), (item_x, item_y), (item_x, item_y+1)],
+            [(item_x, item_y-1), (item_x, item_y), (item_x+1, item_y-1), (item_x+1, item_y)],
+        ]
+
+        for corner_checked in corner_regions:
+            # Convert to frozenset for uniqueness
+            corner_frozen = frozenset(corner_checked)
+
+            if edges_dict[item] != 0 and corner_frozen not in corners_checked:
+                sub_garden = nump_garden[
+                    min(p[0] for p in corner_checked): max(p[0] for p in corner_checked) + 1,
+                    min(p[1] for p in corner_checked): max(p[1] for p in corner_checked) + 1
+                ]
+                count_item = np.sum(sub_garden == character)
+                corners_checked.add(corner_frozen)
+                if count_item == 1 or count_item == 3:
+                    corner_count += 1
+
+    return corner_count
+
+
+    
             
                 
 
 
 
-def build_final_dict(temp_group):
+def build_final_dict(temp_group,matrix):
     global edges_dict
     global final_groups
     sorted_temp_group = sorted(temp_group)
@@ -235,7 +265,8 @@ def build_final_dict(temp_group):
     total_perimeter = 0
     for item in sorted_temp_group:
         total_perimeter += edges_dict[item]
-    final_groups[sorted_temp_group[0]] = (total_area, total_perimeter)
+    corners = count_corners(temp_group)
+    final_groups[sorted_temp_group[0]] = (total_area, total_perimeter,corners)
     return final_groups[sorted_temp_group[0]]
 
 
@@ -248,11 +279,58 @@ def build_final_dict(temp_group):
 
 #     return total_cost
     
-    
-data = fetch_data('https://adventofcode.com/2024/day/12/input',"53616c7465645f5fc1fe684fb1f69a6b41ac2b62bd1750416b41a269ae6a524fc41139a82c1124eb6003e39f8fcc8be904a4994139cab73e3e065fa38ec386cd")
+def count_corners(temp_group) -> int:
+    # Outside corners:
+    # ?.   # If (x, y-1) (up) and (x-1, y) (left) are different from A
+    # .A<  # Then A (with a caret pointed to it) is an outside corner
+
+    # Inside corners:
+    # VA   # if (x, y-1) and (x-1, y) are the same and (x-1, y-1) is different from A,
+    # AA<  # then A (with a caret pointed to it) is an inside corner
+
+    # Then check each rotation. A single coordinate can be a corner up to 4 times so we must check all ways.
+
+    outside_check = [
+        # different, different
+        [(0, -1), (-1, 0)],
+        [(0, -1), (1, 0)],
+        [(1, 0), (0, 1)],
+        [(-1, 0), (0, 1)]
+    ]
+    inside_check = [
+        # Same, same, different
+        [(0, -1), (-1, 0), (-1, -1)],
+        [(0, -1), (1, 0), (1, -1)],
+        [(1, 0), (0, 1), (1, 1)],
+        [(-1, 0), (0, 1), (-1, 1)]
+    ]
+    corner_count = 0
+    for coord in temp_group:
+        cx, cy = coord
+        for o_coords in outside_check:
+            ox1, oy1 = o_coords[0]
+            ox2, oy2 = o_coords[1]
+            if (cx + ox1, cy + oy1) not in temp_group and (cx + ox2, cy + oy2) not in temp_group:
+                corner_count += 1
+        for i_coords in inside_check:
+            ox1, oy1 = i_coords[0]
+            ox2, oy2 = i_coords[1]
+            ox3, oy3 = i_coords[2]
+            if ((cx + ox1, cy + oy1) in temp_group and (cx + ox2, cy + oy2) in temp_group and
+                    (cx + ox3, cy + oy3) not in temp_group):
+                corner_count += 1
+    return corner_count
+
+
+
+
+data = fetch_data('https://adventofcode.com/2024/day/12/input',"53616c7465645f5f3d0359100dde556a580def32a5eccfcc5230a4e689e11e4c1d7bfd5d5bda1d1b9dd6916f8b3a7cdf204f8190adebc75f257a2eb2bc5c003c")
 parsed_data = parse_data(data)
-# build_area(parsed_data)
-find_corners(parsed_data)
+build_area(parsed_data)
+# temp_group = check_neighbors(parsed_data,(0,0),parsed_data[0][0],[(0,0)])
+# print(find_corners(temp_group,parsed_data))
+
+
     
     
 
