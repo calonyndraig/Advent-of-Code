@@ -101,9 +101,65 @@ min_points, best_paths, unique_tiles = build_paths(maze)
 print(len(unique_tiles))
 
 
+""" trying dijkstra"""
 
+def dijkstra_min_paths(maze):
+    global exit_pos, start_pos
 
+    pq = [(0, start_pos,"right")] #current points, current location, current direction
+    costs = {} #minimum cost to reach each position
+    paths = {} #best path to each position
+    best_paths = []
+    min_points = float('inf')
 
+    costs[start_pos] = 0
+    paths[start_pos] = [start_pos]
+
+    while pq:
+        current_points,current_pos,current_direction = heapq.heappop(pq)
+        x,y = current_pos
+
+        if current_pos == exit_pos and current_points > min_points: # stop if we find higher cost exit
+            continue
+
+        if current_pos == exit_pos and current_points == min_points: # adding path to exit with same cost
+            best_paths.append(paths[current_pos])
+            continue
+
+        if current_pos == exit_pos and current_points < min_points: #found better path, update min points and reset paths
+            min_points = current_points
+            best_paths = [paths[current_pos]]
+            continue
+
+        for direction in ['right', 'left', 'up', 'down']:
+            nx, ny = x + directions[direction][0], y + directions[direction][1]
+            neighbor = (nx, ny)
+
+            if maze[nx][ny] == '#':
+                continue    # skip walls
+            
+            new_points = current_points + 1:
+            
+            if direction != current_direction:
+                if direction in direction_to_check[current_direction]:
+                    new_points += 1000  # One rotation
+                else:
+                    new_points += 2000  # Two rotations            
+
+            if neighbor not in costs or new_points < costs[neighbor]:
+                costs[neighbor] = new_points
+                heapq.heappush(pq,(newpoints,neighbor,direction))
+                paths[neighbor] = paths[current_pos] + [neighbor]
+
+    unique_tiles = set()
+    for path in best_paths:
+        unique_tiles.update(path)
+
+    return min_points, best_paths, unique_tiles
+            
+min_points, best_paths, unique_tiles = dijkstra_min_paths(maze)
+
+print(min_points, len(best_paths), len(unique_tiles))
 
 
 """ previous attempt"""
