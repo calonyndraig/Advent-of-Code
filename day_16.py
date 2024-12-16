@@ -25,8 +25,15 @@ def parse_data(data):  ### creates matrix
         parsed_data.append(list(row))
     return parsed_data
 
+# def create_txt(data):
+#     with open("maze.txt", "w") as file:
+#         file.write(data)
+
 data = fetch_data('https://adventofcode.com/2024/day/16/input',"53616c7465645f5fc1fe684fb1f69a6b41ac2b62bd1750416b41a269ae6a524fc41139a82c1124eb6003e39f8fcc8be904a4994139cab73e3e065fa38ec386cd")
 maze = parse_data(data)
+
+create_txt(data)
+
 
 start_pos = (len(maze)-2, 1)
 exit_pos = (1,len(maze[0])-2)
@@ -57,9 +64,9 @@ def build_paths(maze):
         current_points,current_pos,path,current_direction = heapq.heappop(pq)
         x,y = current_pos
 
-        # if (current_pos, current_direction) in visited:
-        #     if visited[(current_pos, current_direction)] <= current_points:  # if we've already been here but with fewer current points
-        #         continue
+        if (current_pos, current_direction) in visited:
+            if visited[(current_pos, current_direction)] <= current_points:  # if we've already been here but with fewer current points
+                continue
         visited[(current_pos,current_direction)] = current_points
 
         new_path = path + [current_pos] # adding the new position to the path we are currently treading
@@ -96,39 +103,105 @@ def build_paths(maze):
 
     return min_points, best_paths, unique_tiles
 
-min_points, best_paths, unique_tiles = build_paths(maze)
+# min_points, best_paths, unique_tiles = build_paths(maze)
 
-print(len(unique_tiles))
+# print(len(unique_tiles))
 
 
 """ trying dijkstra"""
 
+# def dijkstra_min_paths(maze):
+#     global exit_pos, start_pos
+
+#     pq = [(0, start_pos,"right")] #current points, current location, current direction
+#     costs = {} #minimum cost to reach each position
+#     paths = {} #best path to each position
+#     best_paths = []
+#     min_points = float('inf')
+
+#     costs[start_pos] = 0
+#     paths[start_pos] = [[start_pos]]
+
+#     while pq:
+#         current_points,current_pos,current_direction = heapq.heappop(pq)
+#         x,y = current_pos
+
+
+#         if current_pos == exit_pos and current_points > min_points: # stop if we find higher cost exit
+#             continue
+
+#         if current_pos == exit_pos:
+#             if current_points < min_points:
+#                 min_points = current_points
+#                 best_paths = paths[current_pos]
+#             elif current_points == min_points: # adding path to exit with same cost
+#                 best_paths.extend(paths[current_pos])
+#             continue
+
+
+#         for direction in ['right', 'left', 'up', 'down']:
+#             nx, ny = x + directions[direction][0], y + directions[direction][1]
+#             neighbor = (nx, ny)
+
+#             if maze[nx][ny] == '#':
+#                 continue    # skip walls
+            
+#             new_points = current_points + 1
+            
+#             if direction != current_direction:
+#                 if direction in direction_to_check[current_direction]:
+#                     new_points += 1000  # One rotation
+#                 else:
+#                     new_points += 2000  # Two rotations            
+
+#             if neighbor not in costs or new_points < costs[neighbor]:
+#                 costs[neighbor] = new_points
+#                 paths[neighbor] = [p + [neighbor] for p in paths[current_pos]]
+#                 heapq.heappush(pq,(new_points,neighbor,direction))
+#             elif new_points == costs[neighbor]:
+#                 paths[neighbor].extend(p +[neighbor] for p in paths[current_pos])
+                
+
+#     unique_tiles = set()
+#     for path in best_paths:
+#         unique_tiles.update(path)
+
+#     return min_points, best_paths, unique_tiles
+            
+# min_points, best_paths, unique_tiles = dijkstra_min_paths(maze)
+
+# print(min_points, len(best_paths), len(unique_tiles))
+
+
+
 def dijkstra_min_paths(maze):
     global exit_pos, start_pos
 
-    pq = [(0, start_pos,"right")] #current points, current location, current direction
-    costs = {} #minimum cost to reach each position
-    paths = {} #best path to each position
-    best_paths = []
-    min_points = float('inf')
+    pq = [(0, start_pos, "right")]  # priority queue: (current_points, current_position, current_direction)
+    costs = {}  # minimum cost to reach each position
+    paths = {}  # paths to each position
+    best_paths = []  # store all best paths to the exit
+    min_points = float('inf')  # track the minimum cost to the exit
 
+    # Initialize start position
     costs[start_pos] = 0
-    paths[start_pos] = [start_pos]
+    paths[start_pos] = [[start_pos]]
 
     while pq:
-        current_points,current_pos,current_direction = heapq.heappop(pq)
-        x,y = current_pos
+        current_points, current_pos, current_direction = heapq.heappop(pq)
+        x, y = current_pos
 
-        if current_pos == exit_pos and current_points > min_points: # stop if we find higher cost exit
+        # Stop exploring paths with higher costs
+        if current_pos == exit_pos and current_points > min_points:
             continue
 
-        if current_pos == exit_pos and current_points == min_points: # adding path to exit with same cost
-            best_paths.append(paths[current_pos])
-            continue
-
-        if current_pos == exit_pos and current_points < min_points: #found better path, update min points and reset paths
-            min_points = current_points
-            best_paths = [paths[current_pos]]
+        # Track all optimal paths to the exit
+        if current_pos == exit_pos:
+            if current_points < min_points:
+                min_points = current_points
+                best_paths = paths[current_pos]  # Reset with the new best paths
+            elif current_points == min_points:
+                best_paths.extend(paths[current_pos])  # Add paths with the same cost
             continue
 
         for direction in ['right', 'left', 'up', 'down']:
@@ -136,30 +209,38 @@ def dijkstra_min_paths(maze):
             neighbor = (nx, ny)
 
             if maze[nx][ny] == '#':
-                continue    # skip walls
+                continue  # Skip walls
             
-            new_points = current_points + 1:
-            
+            # Calculate cost to move to the neighbor
+            new_points = current_points + 1
             if direction != current_direction:
                 if direction in direction_to_check[current_direction]:
                     new_points += 1000  # One rotation
                 else:
-                    new_points += 2000  # Two rotations            
+                    new_points += 2000  # Two rotations
 
+            # If it's a cheaper path to this neighbor, update costs and paths
             if neighbor not in costs or new_points < costs[neighbor]:
                 costs[neighbor] = new_points
-                heapq.heappush(pq,(newpoints,neighbor,direction))
-                paths[neighbor] = paths[current_pos] + [neighbor]
+                paths[neighbor] = [p + [neighbor] for p in paths[current_pos]]  # Store new paths
+                heapq.heappush(pq, (new_points, neighbor, direction))
 
+            # If it's an equally optimal path, add it to the existing paths
+            elif new_points == costs[neighbor]:
+                paths[neighbor].extend(p + [neighbor] for p in paths[current_pos])
+
+    # Collect all unique tiles from the best paths
     unique_tiles = set()
     for path in best_paths:
         unique_tiles.update(path)
 
     return min_points, best_paths, unique_tiles
-            
+
+
 min_points, best_paths, unique_tiles = dijkstra_min_paths(maze)
 
 print(min_points, len(best_paths), len(unique_tiles))
+
 
 
 """ previous attempt"""
