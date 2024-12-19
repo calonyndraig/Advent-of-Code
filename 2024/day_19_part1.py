@@ -54,18 +54,22 @@ def is_possible(design,towels_list):
                 parts_counter[substring] += 1
     return dp[len(design)]
 
+total_possible = 0
+for i in desired_designs:
+    if is_possible(i,reversed_towels):
+        total_possible += 1
+
+print(total_possible)
 
 
-
-
-print(is_possible('brwrr',['r','wr','b','g','bwu','rb','gb','br']))
-print(is_possible('bggr',['r','wr','b','g','bwu','rb','gb','br']))
-print(is_possible('gbbr',['r','wr','b','g','bwu','rb','gb','br']))
-print(is_possible('rrbgbr',['r','wr','b','g','bwu','rb','gb','br']))
-print(is_possible('ubwu',['r','wr','b','g','bwu','rb','gb','br']))
-print(is_possible('bwurrg',['r','wr','b','g','bwu','rb','gb','br']))
-print(is_possible('brgr',['r','wr','b','g','bwu','rb','gb','br']))
-print(is_possible('bbrgwb',['r','wr','b','g','bwu','rb','gb','br']))
+# print(is_possible('brwrr',['r','wr','b','g','bwu','rb','gb','br']))
+# print(is_possible('bggr',['r','wr','b','g','bwu','rb','gb','br']))
+# print(is_possible('gbbr',['r','wr','b','g','bwu','rb','gb','br']))
+# print(is_possible('rrbgbr',['r','wr','b','g','bwu','rb','gb','br']))
+# print(is_possible('ubwu',['r','wr','b','g','bwu','rb','gb','br']))
+# print(is_possible('bwurrg',['r','wr','b','g','bwu','rb','gb','br']))
+# print(is_possible('brgr',['r','wr','b','g','bwu','rb','gb','br']))
+# print(is_possible('bbrgwb',['r','wr','b','g','bwu','rb','gb','br']))
 
 
 
