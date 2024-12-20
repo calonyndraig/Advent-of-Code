@@ -34,33 +34,36 @@ for towel in reversed(sorted_towels):
 
 desired_designs = data[2:]
 
+
 """solution decoding"""
 
 def is_possible(design,towels_list):
-    parts_counter = Counter(towels_list)
-    dp = [False] * (len(design) + 1)
+    towels_list = set(towels_list)
+    n = len(design)
+    dp = [False] * (n+1)
     dp[0] = True
-    
-    for i in range(1,len(design) + 1):
-        for j in range(i):
-            substring = design[j:i]
-            if dp[j] and parts_counter[substring] > 0:
-                dp[i] = True
-                parts_counter[substring] -= 1
 
+    used_towels = [set() for _ in range(n+1)]
+    used_towels[0] = set()
+
+    for i in range(1,n+1):
         for j in range(i):
             substring = design[j:i]
-            if dp[j] and parts_counter[substring] == 0:
-                parts_counter[substring] += 1
-    return dp[len(design)]
+            if substring in towels_list and dp[j] and substring not in used_towels:
+                dp[i] = True
+                used_towels[i] = used_towels[j] | {substring}
+                break
+    return dp[n]
 
 total_possible = 0
-for i in desired_designs:
-    if is_possible(i,reversed_towels):
+for design in desired_designs:
+    true_false = is_possible(design,sorted_towels)
+    if true_false:
         total_possible += 1
 
 print(total_possible)
-
+    
+"""Test cases"""
 
 # print(is_possible('brwrr',['r','wr','b','g','bwu','rb','gb','br']))
 # print(is_possible('bggr',['r','wr','b','g','bwu','rb','gb','br']))
@@ -70,11 +73,3 @@ print(total_possible)
 # print(is_possible('bwurrg',['r','wr','b','g','bwu','rb','gb','br']))
 # print(is_possible('brgr',['r','wr','b','g','bwu','rb','gb','br']))
 # print(is_possible('bbrgwb',['r','wr','b','g','bwu','rb','gb','br']))
-
-
-
-
-
-
-# for design in desired_designs:
-    # can_arrange = is_possible(design,available_towels)
