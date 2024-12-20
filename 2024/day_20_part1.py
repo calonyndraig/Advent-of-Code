@@ -43,6 +43,10 @@ def find_obstacles(maze):  # retuns list of coordinates that have obstacles
                 walls_coords.append((i,j))
     return walls_coords
 
+"""def legal_cheats(maze,wall_coords)"""  # maybe modify find_obstacles to do this in a single step? 
+# if wall has another wall directly next to it, you can use both; otherwise use only one.
+# make cheat list
+
 dirs = {0:"R",1:"L",2:"U",3:"D"}
 
 directions = {0 : (0,1),
@@ -53,7 +57,7 @@ directions = {0 : (0,1),
 
 """ Use modification of day 16 to run maze, get quickest path"""
 
-""" Use modification of maze to get quickest path with a single obstacle removed"""
+""" Use modification of maze to get quickest path with up to two obstacles removed"""
 
 """need to calculate difference in length of path from no-cheat path to the cheat path"""
 
