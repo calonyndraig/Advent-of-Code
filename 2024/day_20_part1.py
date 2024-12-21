@@ -1,4 +1,12 @@
+import copy
+from threading import Event
+from contextlib import contextmanager
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from heapq import heappop, heappush
+from math import inf
 from pip._vendor import requests
+
+stop_event = Event()
 
 def fetch_data(url,session):
     headers = {
@@ -17,16 +25,25 @@ def fetch_data(url,session):
 data = fetch_data('https://adventofcode.com/2024/day/20/input',"53616c7465645f5fc1fe684fb1f69a6b41ac2b62bd1750416b41a269ae6a524fc41139a82c1124eb6003e39f8fcc8be904a4994139cab73e3e065fa38ec386cd")
 maze = data.splitlines()
 
+dirs = {0:"R",1:"L",2:"U",3:"D"}
+reverse_dirs = {v: k for k, v in dirs.items()}  # Reverse the mapping of dirs
+
+
+directions = {0 : tuple((0,1)),
+              1 : tuple((0,-1)),
+              2 : tuple((-1,0)),
+              3 : tuple((1,0))
+              }
 
 def find_points(maze,start=None,end=None): # initializes start and end
     for i, row in enumerate(maze):
+        if start and end:
+            break
         for j, item in enumerate(row):
-            if not start:
-                if item == "S":
-                    start = tuple((i,j))
-            if not end:
-                if item == "E":
-                    end = tuple((i,j))
+            if item == "S":
+                start = tuple((i,j))
+            elif item == "E":
+                end = tuple((i,j))
             if start and end:
                 break
         if start and end:
@@ -36,29 +53,100 @@ def find_points(maze,start=None,end=None): # initializes start and end
 start,end = find_points(maze)
 
 def find_obstacles(maze):  # retuns list of coordinates that have obstacles
-    walls_coords = []
+    walls_coords = set()
     for i in range(1,len(maze)-1):
         for j in range(1,len(maze[0])-1):
             if maze[i][j] == "#":
-                walls_coords.append((i,j))
+                walls_coords.add(((i,j)))
+                for dx, dy in directions.values():
+                    new_i, new_j = i + dx, j + dy
+                    if 0 <= new_i < len(maze[0]) - 1 and 0 <= new_j < len(maze) - 1 and maze[new_i][new_j] == "#":
+                        walls_coords.add(((i,j),(new_i,new_j)))
     return walls_coords
 
-"""def legal_cheats(maze,wall_coords)"""  # maybe modify find_obstacles to do this in a single step? 
-# if wall has another wall directly next to it, you can use both; otherwise use only one.
-# make cheat list
+cheat_list = find_obstacles(maze)
 
-dirs = {0:"R",1:"L",2:"U",3:"D"}
+def run_maze(maze, start, end, cheats=False,current_goal=inf):
+    visited = dict()
+    path = tuple()
+    checking = [(0,start,0,path)]
+    seconds_taken = inf
 
-directions = {0 : (0,1),
-              1 : (0,-1),
-              2 : (-1,0),
-              3 : (1,0)
-              }
+    while checking:
+        current_seconds, pos, d, path = heappop(checking)
+        # print(f"Popping from heap: {current_seconds}, {pos}, {d}, {path}")
+        if cheats and current_seconds > current_goal:
+            continue
+        if current_seconds > seconds_taken:
+            break
+        if (pos, d) in visited and visited[(pos, d)] <= current_seconds:
+            continue
+        visited[(pos, d)] = current_seconds
+        if pos == end:
+            seconds_taken = current_seconds
+            return current_seconds, path
+        for i, (dx,dy) in directions.items():
+            new_x,new_y = pos[0] + dx, pos[1] + dy
+            if maze[new_x][new_y] != "#":
+                newpos = tuple((new_x, new_y))
+                # print("Pushing to heap: f{current_seconds+1}, {newpos}, {i}, {path + dirs[i]}")
+                heappush(checking, (current_seconds+1, newpos, i, path + (pos,)))
 
-""" Use modification of day 16 to run maze, get quickest path"""
+    return seconds_taken, path
 
-""" Use modification of maze to get quickest path with up to two obstacles removed"""
 
-"""need to calculate difference in length of path from no-cheat path to the cheat path"""
+without_cheats, path = run_maze(maze,start,end)
 
-"""if difference is greater than 100, add cheat to list"""
+with_cheats_goal = without_cheats - 100
+
+beats_goal = 0 
+test_maze = [list(row) for row in maze]
+cheat_list = list(cheat_list)
+
+# Context manager for applying and reverting cheats
+@contextmanager
+def apply_cheat(maze, item):
+    if isinstance(item[0], int):  # Single cheat
+        x, y = item
+        original = maze[x][y]
+        maze[x][y] = '.'
+        yield
+        maze[x][y] = original
+    else:  # Paired cheat
+        (x1, y1), (x2, y2) = item
+        original1, original2 = maze[x1][y1], maze[x2][y2]
+        maze[x1][y1], maze[x2][y2] = '.', '.'
+        yield
+        maze[x1][y1], maze[x2][y2] = original1, original2
+
+# Function to process a batch of cheats
+def process_cheat_batch(batch, maze, start, end, with_cheats_goal, batch_index, total_batches):
+    local_beats_goal = 0
+    print(f"Processing batch {batch_index + 1}/{total_batches}...")
+    for index,item in enumerate(batch):
+        print(f"Processing item {index}")
+        with apply_cheat(maze, item):
+            result = run_maze(maze, start, end, True, with_cheats_goal)
+            if result is not None:
+                local_beats_goal += 1
+    return local_beats_goal
+
+# Split cheat_list into batches
+batch_size = 4  # Adjust batch size based on performance
+batches = [cheat_list[i:i + batch_size] for i in range(0, len(cheat_list), batch_size)]
+total_batches = len(batches)
+
+beats_goal = 0
+
+# Parallel processing using ThreadPoolExecutor
+with ThreadPoolExecutor() as executor:
+    futures = [
+        executor.submit(process_cheat_batch, batch, test_maze, start, end, with_cheats_goal, idx, total_batches)
+        for idx, batch in enumerate(batches)
+    ]
+
+    # Collect results as each batch completes
+    for future in as_completed(futures):
+        beats_goal += future.result()
+
+print(f"Total cheats that beat the goal: {beats_goal}")

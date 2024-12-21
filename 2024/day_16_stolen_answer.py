@@ -2,7 +2,7 @@ from sys import argv
 from heapq import heappop, heappush
 from math import inf
 
-with open("maze.txt") as f:
+with open("maze20.txt") as f:
     lines = [l.strip() for l in f]
 
 dimx, dimy = (len(lines[0]), len(lines))
