@@ -5,13 +5,16 @@ def build_keypad_graph(layout):
     rows = layout.splitlines()
     for i, row in enumerate(rows):
         for j, char in enumerate(row):
-            if char == " ":
+            if char == " ":  # Skip empty spaces
                 continue
-            for di, dj in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            for di, dj in [(-1, 0), (1, 0), (0, -1), (0, 1)]:  # Up, down, left, right
                 ni, nj = i + di, j + dj
-                if 0 <= ni < len(rows) and 0 <= nj < len(rows[0]) and rows[ni][nj] != " ":
-                    graph[char].append(rows[ni][nj])
+                if 0 <= ni < len(rows) and 0 <= nj < len(rows[0]):
+                    neighbor = rows[ni][nj]
+                    if neighbor != " ":
+                        graph[char].append(neighbor)
     return graph
+
 
 def bfs_shortest_path(graph, start, goal):
     queue = deque([(start, [])])
@@ -29,17 +32,21 @@ def bfs_shortest_path(graph, start, goal):
 def calculate_complexity(codes, numeric_graph, directional_graph):
     complexities = []
     for code in codes:
-        numeric_part = int(code.lstrip("0A"))  # Extract numeric part
+        numeric_part = int(code.rstrip("A").lstrip("0") or "0")  # Extract numeric part
         current = 'A'
         total_moves = 0
 
         for digit in code:
             path = bfs_shortest_path(numeric_graph, current, digit)
-            total_moves += len(path) - 1  # Count steps to the target
+            if len(path) == 0:
+                raise ValueError(f"No valid path from {current} to {digit}")
+            total_moves += max(len(path) - 1, 0)  # Ensure non-negative step count
             current = digit
+
 
         complexities.append(total_moves * numeric_part)
     return sum(complexities)
+
 
 # Define layouts
 numeric_layout = """
