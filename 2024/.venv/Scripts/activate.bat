@@ -8,7 +8,7 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
-set "VIRTUAL_ENV=C:\Users\calon\Documents\Advent_of_Code_2024\Advent-of-Code-2024\2024\.venv"
+set "VIRTUAL_ENV=C:\Users\calon\Documents\Advent_of_Code_2024\Advent-of-Code\2024\.venv"
 
 if not defined PROMPT set PROMPT=$P$G
 
