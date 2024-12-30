@@ -1,8 +1,10 @@
+"""For challenge found at https://adventofcode.com/2024/day/1"""
 
-with open(r"input_files/day_01.txt") as file:
+with open(r"input_files/day_01.txt") as file: #converts input into list of strings
     data = file.readlines()
 
 def prep_data(data):
+    """Parses data into two lists of locations"""
 
     location_list_1 = []
     location_list_2 = []
@@ -15,6 +17,7 @@ def prep_data(data):
     return location_list_1, location_list_2
 
 def calc_simularity(location_list_1, location_list_2):
+    """Calculates simularity score between two lists"""
 
     similarity_score = 0
 
