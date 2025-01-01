@@ -1,7 +1,10 @@
 """For challenge found at https://adventofcode.com/2024/day/4"""
 
 with open(r"input_files/day_04.txt","r") as file: # converts input into list of strings
-    matrix = file.readlines()
+    data = file.readlines()
+
+def prep_data(data): # strips trailing space on matrix lines:
+    return [x.strip() for x in data]
 
 directions = [(-1,0),  # (x,y)
               (1,0),   # x = row, y = col 
@@ -46,4 +49,5 @@ def find_x(matrix):
 
     return total_count                
 
+matrix = prep_data(data)
 print(find_x(matrix))
