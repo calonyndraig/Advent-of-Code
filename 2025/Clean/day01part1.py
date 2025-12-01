@@ -19,12 +19,12 @@ for move in moves_list: # converts individual strings to a direction + a number 
     number = int(move[1:])
     
     if direction == "L":
-        current_lock_location -= number # moves lock position backwards   
+        current_lock_location -= number # moves lock position backwards
        
     if direction == "R":
-        current_lock_location += number # moves lock position forward    
+        current_lock_location += number # moves lock position forward
        
     if current_lock_location % 100 == 0:  # checks whether the lock position is a multiple of 100 (i.e., if it landed back on 0)
-        current_zeros += 1 # updates current number of zeroes.        
+        current_zeros += 1 # updates current number of zeroes
 
 print("Final Zero Count: ", current_zeros) # prints final answer
