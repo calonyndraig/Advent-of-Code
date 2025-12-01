@@ -6,7 +6,7 @@ sys.path.append(str(parent_dir))
 
 import get_source
 
-input = get_source.download_input(1,2025,"53616c7465645f5fbb067603173994af2e21bebdd2b341a01395e2fb0cc53a062a148cdf70098ffec55fbfb023b471b283dc6403a774ae372c4614a32c682336")
+input = get_source.download_input(1,2025)
 
 moves_list = get_source.string_convert_to_list(input)
 
