@@ -39,6 +39,14 @@ def string_convert_to_list(text):
 
     return list_of_lines
 
+def break_string_by_char(text, char):
+    """
+    Converts the .txt file to a list based on a given character.
+    """
+    list_of_strings = [segment.strip() for segment in text.split(char)]
+
+    return list_of_strings
+
 
 if __name__ == "__main__":
     SESSION = "53616c7465645f5fbb067603173994af2e21bebdd2b341a01395e2fb0cc53a062a148cdf70098ffec55fbfb023b471b283dc6403a774ae372c4614a32c682336"
